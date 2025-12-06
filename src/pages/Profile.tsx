@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useUserStore } from '../store/userStore';
 import { useUIStore } from '../store/uiStore';
+import { useWallet } from '../hooks/useWallet';
+import { useNeoIntegration } from '../hooks/useNeoIntegration';
 import { getCurrentMockUser } from '../mock';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -12,6 +14,8 @@ export const Profile: React.FC = () => {
   const { currentUser, setUser, isWalletConnected, connectWallet, disconnectWallet, updatePreferences } =
     useUserStore();
   const { addToast } = useUIStore();
+  const { connect, disconnect, getBalance, account, balances, isConnected, invokeMockTransaction } = useWallet();
+  const { signAndInvoke } = useNeoIntegration();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<Partial<User>>({});
 
@@ -36,10 +40,35 @@ export const Profile: React.FC = () => {
   const handleWalletConnect = async () => {
     if (isWalletConnected) {
       disconnectWallet();
+      await disconnect();
       addToast('Wallet disconnected', 'info');
-    } else {
-      connectWallet();
-      addToast('Wallet connected (mock)', 'success');
+      return;
+    }
+
+    try {
+      const acc = await connect();
+      if (acc) {
+        connectWallet({ address: acc.address });
+        updatePreferences({ walletAddress: acc.address });
+        await getBalance(acc.address);
+        addToast('NeoLine wallet connected', 'success');
+      }
+    } catch (err: any) {
+      addToast('Wallet connection failed', 'error');
+      console.error('Wallet connection failed:', err);
+    }
+  };
+
+  const handleMockInvoke = async () => {
+    try {
+      const tx = await signAndInvoke({
+        scriptHash: 'demo_script_hash',
+        operation: 'demoInvoke',
+        args: [],
+      });
+      addToast(`Tx submitted: ${tx.txid}`, 'success');
+    } catch (err: any) {
+      addToast('Transaction failed', 'error');
     }
   };
 
@@ -156,16 +185,32 @@ export const Profile: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-900">Wallet & Web3</h2>
         </div>
         <div className="space-y-4">
-          {isWalletConnected ? (
+          {isWalletConnected && isConnected ? (
             <>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Wallet Address</p>
                 <p className="font-mono text-sm text-gray-900">
-                  {currentUser.walletAddress || 'Not connected'}
+                  {account?.address || currentUser.walletAddress || 'Not connected'}
                 </p>
               </div>
+              {balances.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Balances</p>
+                  <div className="space-y-1 text-sm font-mono text-gray-900">
+                    {balances.map((b) => (
+                      <div key={`${b.symbol}-${b.asset_hash}`} className="flex justify-between">
+                        <span>{b.symbol}</span>
+                        <span>{b.amount}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <Button variant="secondary" onClick={handleWalletConnect}>
                 Disconnect Wallet
+              </Button>
+              <Button variant="primary" onClick={handleMockInvoke}>
+                Mock Sign & Submit Tx
               </Button>
             </>
           ) : (

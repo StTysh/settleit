@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDisputesStore } from '../store/disputesStore';
 import { useUserStore } from '../store/userStore';
 import { useUIStore } from '../store/uiStore';
-import { useSpoonOS } from '../hooks/useSpoonOS';
+import { useSpoonOS, EvidenceItem } from '../hooks/useSpoonOS';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -27,11 +27,13 @@ export const DisputeDetail: React.FC = () => {
   const { getDisputeById, updateDispute } = useDisputesStore();
   const { currentUser } = useUserStore();
   const { addToast } = useUIStore();
-  const { getAgentAnalysis, requestAgentDecision } = useSpoonOS();
+  const { submitForAnalysis } = useSpoonOS();
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [showDecisionModal, setShowDecisionModal] = useState(false);
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [decisionWinner, setDecisionWinner] = useState<'creator' | 'opponent'>('creator');
   const [decisionReason, setDecisionReason] = useState('');
   const [newEvidence, setNewEvidence] = useState({
@@ -90,11 +92,57 @@ export const DisputeDetail: React.FC = () => {
     setNewEvidence({ type: 'text', content: '', description: '' });
   };
 
-  const handleSimulateAgentAnalysis = async () => {
-    const analysis = await getAgentAnalysis(dispute.id);
-    setAiAnalysis(analysis);
-    setShowAIAnalysis(true);
-    addToast('AI analysis generated (mock)', 'info');
+  const toEvidenceItems = (): { creator: EvidenceItem[]; opponent: EvidenceItem[] } => {
+    const creatorId = dispute.creatorId;
+    const opponentId = dispute.opponentId;
+    const creator: EvidenceItem[] = [];
+    const opponent: EvidenceItem[] = [];
+    dispute.evidence.forEach((ev) => {
+      const item: EvidenceItem = {
+        id: ev.id,
+        type:
+          ev.type === 'file'
+            ? 'document'
+            : ev.type === 'image'
+            ? 'image'
+            : ev.type === 'link'
+            ? 'link'
+            : 'text',
+        content: ev.content,
+        submitted_by: ev.submittedBy === creatorId ? 'creator' : 'opponent',
+      };
+      if (item.submitted_by === 'creator') {
+        creator.push(item);
+      } else {
+        opponent.push(item);
+      }
+    });
+    return { creator, opponent };
+  };
+
+  const handleAgentAnalysis = async () => {
+    setIsAnalyzing(true);
+    setAiError(null);
+    try {
+      const { creator, opponent } = toEvidenceItems();
+      const result = await submitForAnalysis(
+        dispute.id,
+        dispute.title,
+        dispute.description,
+        creator,
+        opponent,
+        dispute.stakeAmount + dispute.opponentStakeAmount
+      );
+      setAiAnalysis(result);
+      setShowAIAnalysis(true);
+      addToast('AI analysis completed', 'success');
+    } catch (err: any) {
+      console.error('AI analysis failed', err);
+      setAiError(err?.message || 'Analysis failed');
+      addToast('AI analysis failed', 'error');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSubmitDecision = () => {
@@ -372,31 +420,38 @@ export const DisputeDetail: React.FC = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* AI Agent Preview Panel */}
+          {/* AI Agent Panel */}
           <Card>
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-primary-600" />
-              <h2 className="text-xl font-semibold text-gray-900">
-                AI Agent Insight
-              </h2>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary-600" />
+                <h2 className="text-xl font-semibold text-gray-900">AI Agent Insight</h2>
+              </div>
+              <span className="text-xs px-2 py-1 rounded-full bg-primary-50 text-primary-700 border border-primary-100">
+                Powered by SpoonOS
+              </span>
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              Coming soon: Powered by SpoonOS agents for AI-powered dispute analysis.
+              Run the SpoonOS agent to analyze the evidence and get a recommendation.
             </p>
             <Button
               variant="secondary"
               size="sm"
-              onClick={handleSimulateAgentAnalysis}
+              onClick={handleAgentAnalysis}
               className="w-full"
+              disabled={isAnalyzing}
             >
-              Simulate Agent Analysis
+              {isAnalyzing ? 'Analyzing...' : 'Run AI Analysis'}
             </Button>
+            {aiError && (
+              <p className="text-sm text-red-600 mt-3">{aiError}</p>
+            )}
             {showAIAnalysis && aiAnalysis && (
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm font-medium text-blue-900 mb-2">
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg space-y-2">
+                <p className="text-sm font-medium text-blue-900">
                   Recommendation: {aiAnalysis.recommendation === 'creator' ? 'Creator' : 'Opponent'}
                 </p>
-                <p className="text-xs text-blue-700 mb-2">
+                <p className="text-xs text-blue-700">
                   Confidence: {(aiAnalysis.confidence * 100).toFixed(0)}%
                 </p>
                 <p className="text-sm text-blue-800 whitespace-pre-wrap">

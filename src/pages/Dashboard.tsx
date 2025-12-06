@@ -12,7 +12,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { currentUser, setUser, isWalletConnected } = useUserStore();
+  const { currentUser, setUser, isWalletConnected, walletBalances } = useUserStore();
   const { disputes, setDisputes, getUserDisputes, getValidatorDisputes } =
     useDisputesStore();
   const [activeTab, setActiveTab] = useState<'my-disputes' | 'as-validator'>(
@@ -83,6 +83,15 @@ export const Dashboard: React.FC = () => {
         </h1>
         {currentUser?.walletAddress && (
           <p className="text-gray-600 mt-1">{currentUser.walletAddress}</p>
+        )}
+        {isWalletConnected && walletBalances.length > 0 && (
+          <div className="mt-3 inline-flex gap-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-blue-800">
+            {walletBalances.map((b) => (
+              <span key={`${b.symbol}-${b.asset_hash}`} className="font-mono">
+                {b.symbol}: {b.amount}
+              </span>
+            ))}
+          </div>
         )}
       </div>
 

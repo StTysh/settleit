@@ -1,5 +1,8 @@
 import React from 'react';
 import { Card } from '../../components/ui';
+import { Button } from '../../components/ui/Button';
+import { useNeoIntegration } from '../../hooks/useNeoIntegration';
+import { useUIStore } from '../../store/uiStore';
 import { CreateDisputeForm } from '../../types';
 import { format } from 'date-fns';
 
@@ -8,6 +11,18 @@ interface Step4ReviewProps {
 }
 
 export const Step4Review: React.FC<Step4ReviewProps> = ({ formData }) => {
+  const { lockStake } = useNeoIntegration();
+  const { addToast } = useUIStore();
+
+  const handleLockStake = async () => {
+    try {
+      const tx = await lockStake('preview_dispute', formData.stakeAmount + formData.opponentStakeAmount, formData.token);
+      addToast(`Stake lock submitted: ${tx.txid}`, 'success');
+    } catch (err) {
+      addToast('Stake lock failed', 'error');
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
@@ -116,6 +131,11 @@ export const Step4Review: React.FC<Step4ReviewProps> = ({ formData }) => {
               finalize the dispute. Both parties must lock their stakes before the dispute
               can proceed to evidence submission.
             </p>
+            <div className="mt-3">
+              <Button variant="primary" onClick={handleLockStake}>
+                Lock Stake (mock)
+              </Button>
+            </div>
           </div>
         </div>
       </Card>

@@ -155,34 +155,17 @@ export const useSpoonOS = () => {
   };
 
   /**
-   * Legacy method for backward compatibility.
-   * Maps to the new submitForAnalysis with simplified interface.
+   * Unified helper: run full analysis with prepared request object.
    */
-  const getAgentAnalysis = async (disputeId: string) => {
-    // This is a compatibility wrapper - in production, you'd fetch actual dispute data
-    console.log('getAgentAnalysis called for:', disputeId);
-    return {
-      recommendation: 'creator' as const,
-      confidence: 0.85,
-      reasoning: 'Analysis pending - connect to SpoonOS backend for real results',
-      evidenceScore: {
-        creator: 0.0,
-        opponent: 0.0,
-      },
-      timestamp: new Date(),
-    };
-  };
-
-  /**
-   * Legacy method for backward compatibility.
-   */
-  const requestAgentDecision = async (disputeId: string) => {
-    console.log('requestAgentDecision called for:', disputeId);
-    return {
-      decision: 'creator' as const,
-      reasoning: 'Decision pending - connect to SpoonOS backend for real results',
-      timestamp: new Date(),
-    };
+  const analyzeDispute = async (request: AnalysisRequest): Promise<AnalysisResponse> => {
+    return submitForAnalysis(
+      request.dispute_id,
+      request.title,
+      request.description,
+      request.creator_evidence,
+      request.opponent_evidence,
+      request.stake_amount,
+    );
   };
 
   return {
@@ -190,10 +173,7 @@ export const useSpoonOS = () => {
     checkAgentStatus,
     submitForAnalysis,
     getQuickAnalysis,
-
-    // Legacy compatibility methods
-    getAgentAnalysis,
-    requestAgentDecision,
+    analyzeDispute,
   };
 };
 

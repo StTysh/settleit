@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
 import { useUIStore } from '../store/uiStore';
+import { useWallet } from '../hooks/useWallet';
 import { Logo } from '../components/Logo';
 import { Button } from '../components/ui/Button';
 import {
@@ -24,8 +25,9 @@ interface AppLayoutProps {
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, isWalletConnected, connectWallet, disconnectWallet } = useUserStore();
-  const { theme, toggleTheme } = useUIStore();
+  const { currentUser, isWalletConnected, disconnectWallet } = useUserStore();
+  const { theme, toggleTheme, addToast } = useUIStore();
+  const { connect, disconnect, isConnected, account, getBalance } = useWallet();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -36,14 +38,27 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   ];
 
   const handleWalletConnect = async () => {
-    if (isWalletConnected) {
+    if (isConnected || isWalletConnected) {
+      await disconnect();
       disconnectWallet();
-      useUIStore.getState().addToast('Wallet disconnected', 'info');
-    } else {
-      connectWallet();
-      useUIStore.getState().addToast('Wallet connected (mock)', 'success');
+      addToast('Wallet disconnected', 'info');
+      return;
+    }
+
+    try {
+      const acc = await connect();
+      if (acc) {
+        await getBalance(acc.address);
+        addToast('Wallet connected', 'success');
+      }
+    } catch (err) {
+      console.error('Wallet connect failed:', err);
+      addToast('Wallet connection failed', 'error');
     }
   };
+
+  const shortAddress = (addr?: string) =>
+    addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : 'Connect Wallet';
 
   const isActive = (path: string) => {
     if (path === '/dashboard') {
@@ -98,14 +113,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 )}
               </button>
               <Button
-                variant={isWalletConnected ? 'secondary' : 'primary'}
+                variant={isConnected || isWalletConnected ? 'secondary' : 'primary'}
                 size="sm"
                 onClick={handleWalletConnect}
               >
                 <Wallet className="h-4 w-4 mr-2" />
-                {isWalletConnected
-                  ? `${currentUser?.walletAddress?.substring(0, 6)}...${currentUser?.walletAddress?.substring(currentUser.walletAddress.length - 4)}`
-                  : 'Connect Wallet'}
+                {shortAddress(account?.address || currentUser?.walletAddress)}
               </Button>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
