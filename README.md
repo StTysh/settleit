@@ -1,121 +1,81 @@
-# Settleit – On-chain Dispute & Promise Resolution
+# settleit
 
-A modern, responsive web application frontend for Settleit, a platform where users can create disputes, bets, or promises, lock crypto stakes, and have validators (human or future AI agents via SpoonOS) make fair decisions.
+`settleit` is a frontend prototype for a dispute, bet, and promise resolution platform. The concept combines wallet-connected users, staked agreements, evidence review, and validator decision-making in a single web interface.
 
-## Features
+## Project status
 
-- 🎯 **Landing Page** - Clean introduction with "How It Works" section
-- 📊 **Dashboard** - Overview of active disputes, stats, and quick access
-- ➕ **Create Dispute Flow** - Multi-step wizard for creating disputes
-- 📋 **Dispute Detail** - Comprehensive dispute view with evidence management
-- ⚖️ **Validator Console** - Dedicated view for validators to review cases
-- 👤 **Profile & Settings** - User preferences and wallet management
-- 🎨 **Modern UI** - Built with React, TypeScript, and Tailwind CSS
+This repository is a product prototype. It contains a substantial frontend experience and application flow, but blockchain, wallet, agent, and backend integrations are still represented by placeholders or mocked data.
 
-## Tech Stack
+## Product concept
 
-- **React 18** with TypeScript
-- **Vite** - Build tool
-- **Tailwind CSS** - Styling
-- **Zustand** - State management
-- **React Router** - Routing
-- **Lucide React** - Icons
-- **date-fns** - Date formatting
+The application is designed around a workflow where users can:
 
-## Getting Started
+- create disputes, bets, or promises
+- define parties and terms
+- lock stakes through blockchain-backed flows
+- submit evidence for review
+- route cases to validators
+- resolve outcomes through validator decisions or future agent-assisted workflows
 
-### Prerequisites
+## Current functionality
 
-- Node.js 18+ and npm
+- landing page and product overview
+- dashboard for active disputes and summary data
+- multi-step dispute creation flow
+- dispute detail pages with evidence-oriented UI
+- validator console
+- profile and settings views
+- local mock-data-driven interaction across the app
 
-### Installation
+## Stack
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd settleit
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- Zustand
+- date-fns
+
+## Repository structure
+
+```text
+src/pages/            Application pages including landing, dashboard, dispute detail, and validator console
+src/pages/CreateDispute/
+                      Multi-step creation workflow
+src/components/ui/    Shared UI primitives
+src/layouts/          App layout components
+src/store/            Zustand state stores
+src/mock/             Mock users, disputes, and evidence data
+src/hooks/            Placeholder integration hooks for wallet, Neo, and SpoonOS flows
 ```
 
-2. Install dependencies:
+## Local development
+
+### Requirements
+
+- Node.js 18+
+- npm
+
+### Setup
+
 ```bash
 npm install
-```
-
-3. Start the development server:
-```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+Open `http://localhost:5173`.
 
-### Building for Production
+## Available scripts
 
 ```bash
+npm run dev
 npm run build
+npm run preview
+npm run lint
 ```
 
-The built files will be in the `dist` directory.
+## Notes
 
-## Project Structure
-
-```
-src/
-├── assets/           # Static assets (logos, images)
-├── components/       # Reusable UI components
-│   ├── ui/          # Base UI components (Button, Card, Modal, etc.)
-│   └── Logo.tsx     # Logo component
-├── hooks/           # Custom React hooks
-│   ├── useWallet.ts          # Wallet integration (placeholder)
-│   ├── useNeoIntegration.ts  # Neo blockchain hooks (placeholder)
-│   └── useSpoonOS.ts         # SpoonOS agent hooks (placeholder)
-├── layouts/         # Layout components
-│   └── AppLayout.tsx  # Main app layout with navigation
-├── mock/            # Mock data generators
-├── pages/           # Page components
-│   ├── Landing.tsx
-│   ├── Dashboard.tsx
-│   ├── CreateDispute/
-│   ├── DisputeDetail.tsx
-│   ├── ValidatorConsole.tsx
-│   └── Profile.tsx
-├── store/           # Zustand stores
-│   ├── userStore.ts
-│   ├── disputesStore.ts
-│   └── uiStore.ts
-├── styles/          # Global styles
-├── types/           # TypeScript type definitions
-└── utils/           # Utility functions
-```
-
-## Future Integrations
-
-This frontend is designed to easily integrate with:
-
-- **Neo Blockchain** - For on-chain dispute creation, stake locking, and automated payouts
-- **SpoonOS Agents** - For AI-powered dispute analysis and decision-making
-
-Integration hooks are already in place as placeholders in `src/hooks/`.
-
-## Mock Data
-
-The application uses mock data for demonstration purposes. All disputes, users, and evidence are generated locally and reset on page refresh.
-
-## Development Notes
-
-- All blockchain and agent integrations are placeholder implementations
-- Wallet connection is mocked (UI only)
-- No persistence - state resets on page refresh
-- Designed to be easily extended with real backend/blockchain integrations
-
-## License
-
-This is a hackathon prototype for demonstration purposes.
-
-## Contributing
-
-This is a prototype project. For production use, implement:
-- Real Neo blockchain integration
-- SpoonOS agent integration
-- Backend API for dispute management
-- Persistent data storage
-- Authentication system
+- Wallet, blockchain, and agent integrations are not wired to live services yet.
+- State is driven by mock data, so the application currently serves as a prototype and UX demonstration rather than a production-ready system.
